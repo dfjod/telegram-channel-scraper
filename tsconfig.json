@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "paths": {
+      // Stop a bug with @types/node
+      "undici-types": ["./node_modules/undici-types/index.d.ts"]
+    }
+  }
+}
