@@ -1,17 +1,19 @@
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions";
 import { getSession, input, saveSessionToFile } from "./utils";
+import { getConfig } from "./config";
 
-if (!process.env.API_ID || !process.env.API_HASH) {
-  throw new Error("API_ID or API_HASH environment variables are missing!");
-}
+const config = getConfig()
 
-const apiId = Number(process.env.API_ID);
-const apiHash = process.env.API_HASH;
+const apiId = config.auth.id;
+const apiHash = config.auth.hash;
 const stringSession = new StringSession(getSession());
 const clientParams = {};
+const mode = config.app.mode;
+const channels = config.app.channelIds;
 
 (async () => {
+    console.log(`Telegram Channel Scrapper running in ${mode} mode...`);
   console.log("Connecting to Telegram...");
 
   const client = new TelegramClient(
