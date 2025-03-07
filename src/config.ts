@@ -2,6 +2,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+type Mode = "live" | "range";
+
 export interface Config {
     auth: {
         id: number;
@@ -9,8 +11,8 @@ export interface Config {
     };
 
     app: {
-        mode: "live" | "range";
-        channelIds: string[],
+        mode: Mode;
+        channelIds: string[];
         startDate?: string;
         endDate?: string;
     };
