@@ -1,8 +1,9 @@
-import { TelegramClient } from "telegram";
+import { Api, TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions";
 import { getSession, input, saveSessionToFile } from "./utils";
 import { getConfig } from "./config";
 import * as fs from "fs";
+import { Message } from "./types";
 
 const DAY = 86400; // Add a date to UNIX timestamp
 
@@ -61,13 +62,37 @@ const channels = config.app.channelIds;
                 console.log(`Getting messages for ${channel}...`)
                 // Messages are in order from most recent to oldest
                 const messages = await client.getMessages(channel, { offsetDate: offsetDate }); // Get messages older than offsetDate (exclusive)
-                const messagesInRange = messages.filter(message => message.date >= startDate);
+
+                let messagesInRange: Api.Message[] = [];
+                // Use loop with break instead of filter for better performance                
+                for (const message of messages) {
+                    if (message.date < startDate) break;
+                    
+                    messagesInRange.push(message);
+                }
 
                 console.log(`Retrieved ${messagesInRange.length} messages`);
 
-                fs.writeFileSync("log.json", JSON.stringify(messagesInRange) + "\n", { flag: "a", encoding: "utf-8" });
+                let processedMessages: Message[] = [];
+
+                // Extract data from Telegram messages
+                for (const message of messagesInRange) {
+                    const processedMessage: Message = {
+                        id: message.id,
+                        date: message.date,
+                        channel: channel,
+                        content: message.message,
+                        hasMedia: message.media !== null,
+                        views: message.views ?? 0,
+                        reactions: message.reactions?.results.reduce((sum, result) => sum + result.count, 0) ?? 0
+                    }
+                    processedMessages.push(processedMessage);
+                }
+
+                fs.writeFileSync("log.json", JSON.stringify(processedMessages) + "\n", { flag: "a", encoding: "utf-8" });
 
                 console.log("Messages written to the log file!");
+                process.exit();
             }
         }
     }

@@ -1,22 +1,7 @@
 import dotenv from "dotenv";
+import { Config } from "./types";
 
 dotenv.config();
-
-type Mode = "live" | "range";
-
-export interface Config {
-    auth: {
-        id: number;
-        hash: string;
-    };
-
-    app: {
-        mode: Mode;
-        channelIds: string[];
-        startDate?: string;
-        endDate?: string;
-    };
-}
 
 export function getConfig(): Config {
     if (!process.env.API_ID || !process.env.API_HASH || !process.env.MODE || !process.env.CHANNEL_IDS ) {
