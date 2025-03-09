@@ -11,6 +11,7 @@ export interface Config {
         channelIds: string[];
         startDate?: string;
         endDate?: string;
+        receiverUrl: string;
     };
 }
 

@@ -1,9 +1,11 @@
 import { Api, TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions";
-import { getSession, input, saveSessionToFile } from "./utils";
+import { getSession, input, mapTelegramMessage, saveSessionToFile, sendScrapeResult } from "./utils";
 import { getConfig } from "./config";
 import * as fs from "fs";
 import { Message } from "./types";
+import { NewMessage } from "telegram/events";
+import * as https from "https";
 
 const DAY = 86400; // Add a date to UNIX timestamp
 
@@ -15,9 +17,11 @@ const stringSession = new StringSession(getSession());
 const clientParams = {};
 const mode = config.app.mode;
 const channels = config.app.channelIds;
+const receiverUrl = config.app.receiverUrl;
 
 (async () => {
     console.log(`Telegram Channel Scrapper running in ${mode} mode...`);
+    receiverUrl && console.log(`Data will be posted to ${receiverUrl}`);
     console.log("Connecting to Telegram...");
 
     const client = new TelegramClient(
@@ -46,7 +50,17 @@ const channels = config.app.channelIds;
     }
 
     if (mode === "live") {
+        console.log(`Watching following channels: ${channels}`);
+        client.addEventHandler(async event => {
+            console.log("New message recieved");
 
+            const mappedMessage = mapTelegramMessage(event.message, String(event.message.chat));
+            console.log(mappedMessage);
+
+            if (receiverUrl !== "") {
+                sendScrapeResult(receiverUrl, mappedMessage);
+            }
+        }, new NewMessage({ incoming: true, chats: channels }));
     } else {
         // Get messages from date range
         if (config.app.startDate && config.app.endDate) {
@@ -73,23 +87,15 @@ const channels = config.app.channelIds;
 
                 console.log(`Retrieved ${messagesInRange.length} messages`);
 
-                let processedMessages: Message[] = [];
+                let mappedMessages: Message[] = [];
 
                 // Extract data from Telegram messages
                 for (const message of messagesInRange) {
-                    const processedMessage: Message = {
-                        id: message.id,
-                        date: message.date,
-                        channel: channel,
-                        content: message.message,
-                        hasMedia: message.media !== null,
-                        views: message.views ?? 0,
-                        reactions: message.reactions?.results.reduce((sum, result) => sum + result.count, 0) ?? 0
-                    }
-                    processedMessages.push(processedMessage);
+                    const mappedMessage = mapTelegramMessage(message, channel)
+                    mappedMessages.push(mappedMessage);
                 }
 
-                fs.writeFileSync("log.json", JSON.stringify(processedMessages) + "\n", { flag: "a", encoding: "utf-8" });
+                fs.writeFileSync("log.json", JSON.stringify(mappedMessages) + "\n", { flag: "a", encoding: "utf-8" });
 
                 console.log("Messages written to the log file!");
                 process.exit();

@@ -27,7 +27,8 @@ export function getConfig(): Config {
     config.auth = { id: Number(process.env.API_ID), hash: process.env.API_HASH };
     config.app = {
         mode: process.env.MODE as "live" | "range",
-        channelIds: process.env.CHANNEL_IDS.split(",")
+        channelIds: process.env.CHANNEL_IDS.split(","),
+        receiverUrl: process.env.RECEIVER_URL ?? ""
     };
 
     if (config.app.mode === "range") {
